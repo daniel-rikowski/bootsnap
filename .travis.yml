@@ -4,6 +4,7 @@ sudo: false
 os:
   - linux
   - osx
+  - windows
 
 rvm:
   - '2.4'
@@ -22,4 +23,11 @@ matrix:
     - rvm: truffleruby
       os: linux
       env: MINIMAL_SUPPORT=1
+  exclude:
+    - rvm:
+        - '2.3'
+        - '2.4'
+        - '2.5'
+        - '2.6'
+      os: windows # Only 2.7 can create symlinks on non-elevated user accounts.
 script: bin/ci

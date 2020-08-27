@@ -58,13 +58,24 @@ class CompileCacheKeyFormatTest < Minitest::Test
     assert_equal(exp, act)
   end
 
-  def test_fetch
-    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler)
-    assert_equal('NEATO /DEV/NULL', actual)
-    data = File.read("#{@tmp_dir}/8c/d2d180bbd995df")
-    assert_equal("neato /dev/null", data.force_encoding(Encoding::BINARY)[64..-1])
-    actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler)
-    assert_equal('NEATO /DEV/NULL', actual)
+  if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+    def test_fetch
+      actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, 'NUL', TestHandler)
+      assert_equal('NEATO NUL', actual)
+      data = File.read("#{@tmp_dir}/36/9eba19c29ffe00")
+      assert_equal("neato NUL", data.force_encoding(Encoding::BINARY)[64..-1])
+      actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, 'NUL', TestHandler)
+      assert_equal('NEATO NUL', actual)
+    end
+  else
+    def test_fetch
+      actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler)
+      assert_equal('NEATO /DEV/NULL', actual)
+      data = File.read("#{@tmp_dir}/8c/d2d180bbd995df")
+      assert_equal("neato /dev/null", data.force_encoding(Encoding::BINARY)[64..-1])
+      actual = Bootsnap::CompileCache::Native.fetch(@tmp_dir, '/dev/null', TestHandler)
+      assert_equal('NEATO /DEV/NULL', actual)
+    end
   end
 
   def test_unexistent_fetch

@@ -23,12 +23,20 @@ class CompileCacheTest < Minitest::Test
     end
   end
 
-  def test_no_write_permission_to_cache
-    path = Help.set_file('a.rb', 'a = 3', 100)
-    folder = File.dirname(Help.cache_path(@tmp_dir, path))
-    FileUtils.mkdir_p(folder)
-    FileUtils.chmod(0400, folder)
-    assert_raises(Bootsnap::CompileCache::PermissionError) { load(path) }
+  if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+    def test_no_write_permission_to_cache
+      # Always pass this test on Windows, because it is not easily possible to make a directory read-only,
+      # i.e. FileUtils.chmod(0400, ...) has not the desired effect, neither does a call to system('attrib +R ...').
+      pass
+    end
+  else
+    def test_no_write_permission_to_cache
+      path = Help.set_file('a.rb', 'a = 3', 100)
+      folder = File.dirname(Help.cache_path(@tmp_dir, path))
+      FileUtils.mkdir_p(folder)
+      FileUtils.chmod(0400, folder)
+      assert_raises(Bootsnap::CompileCache::PermissionError) { load(path) }
+    end
   end
 
   def test_can_open_read_only_cache

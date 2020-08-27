@@ -51,7 +51,7 @@ module MiniTest
         end
 
         def cache_path(dir, file)
-          hex = fnv1a_64(file).to_s(16)
+          hex = fnv1a_64(file).to_s(16).rjust(16, '0')
           "#{dir}/#{hex[0..1]}/#{hex[2..-1]}"
         end
 

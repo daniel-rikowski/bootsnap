@@ -11,15 +11,16 @@ module Bootsnap
 
       def test_stability
         require('time')
-        time_file    = Time.method(:rfc2822).source_location[0]
-        volatile     = Path.new(__FILE__)
-        stable       = Path.new(time_file)
-        unknown      = Path.new('/who/knows')
-        lib          = Path.new(RbConfig::CONFIG['libdir']  + '/a')
-        site         = Path.new(RbConfig::CONFIG['sitedir'] + '/b')
-        bundler      = Path.new('/bp/3')
+        time_file = Time.method(:rfc2822).source_location[0]
+        absolute_prefix = RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/ ? ENV['SystemDrive'] : ''
+        volatile = Path.new(__FILE__)
+        stable = Path.new(time_file)
+        unknown = Path.new(absolute_prefix + '/who/knows')
+        lib = Path.new(RbConfig::CONFIG['libdir'] + '/a')
+        site = Path.new(RbConfig::CONFIG['sitedir'] + '/b')
+        bundler = Path.new(absolute_prefix + '/bp/3')
 
-        Bundler.stubs(:bundle_path).returns('/bp')
+        Bundler.stubs(:bundle_path).returns(absolute_prefix + '/bp')
 
         assert(stable.stable?, "The stable path #{stable.path.inspect} was unexpectedly not stable.")
         refute(stable.volatile?, "The stable path #{stable.path.inspect} was unexpectedly volatile.")
@@ -33,11 +34,20 @@ module Bootsnap
         assert(bundler.stable?, "The bundler path #{bundler.path.inspect} was unexpectedly not stable.")
       end
 
-      def test_non_directory?
-        refute(Path.new('/dev').non_directory?)
-        refute(Path.new('/nope').non_directory?)
-        assert(Path.new('/dev/null').non_directory?)
-        assert(Path.new('/etc/hosts').non_directory?)
+      if RbConfig::CONFIG['host_os'] =~ /mswin|mingw|cygwin/
+        def test_non_directory?
+          refute(Path.new("#{ENV['SystemDrive']}/dev").non_directory?)
+          refute(Path.new("#{ENV['SystemDrive']}/nope").non_directory?)
+          assert(Path.new('CON').non_directory?)
+          assert(Path.new("#{ENV['SystemRoot']}/explorer.exe").non_directory?)
+        end
+      else
+        def test_non_directory?
+          refute(Path.new('/dev').non_directory?)
+          refute(Path.new('/nope').non_directory?)
+          assert(Path.new('/dev/null').non_directory?)
+          assert(Path.new('/etc/hosts').non_directory?)
+        end
       end
 
       def test_volatile_cache_valid_when_mtime_has_not_changed
